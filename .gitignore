@@ -1,0 +1,15 @@
+# Build artifacts
+*.zip
+*.xpi
+
+# IDE / tools
+.claude/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

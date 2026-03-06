@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>CyberStrike</h1>
+
+      <!-- Session Selector -->
+      <div class="section">
+        <div class="section-header">
+          <label>Session</label>
+          <button
+            id="refreshSessions"
+            class="btn-icon"
+            title="Refresh sessions"
+          >
+            &#8635;
+          </button>
+        </div>
+        <select id="sessionSelect">
+          <option value="">-- New Session --</option>
+        </select>
+      </div>
+
+      <!-- Scope & Server -->
+      <div class="field">
+        <label for="scope">Scope</label>
+        <input
+          type="text"
+          id="scope"
+          placeholder="example.com or *.example.com"
+        />
+      </div>
+
+      <div class="field">
+        <label for="serverUrl">Server</label>
+        <input type="text" id="serverUrl" placeholder="http://127.0.0.1:4096" />
+      </div>
+
+      <button id="toggleBtn" class="btn btn-start">Start Capture</button>
+
+      <div class="status-bar">
+        <span id="statusIndicator" class="indicator off"></span>
+        <span id="statusText">Stopped</span>
+        <span id="requestCount" class="count">0</span>
+      </div>
+
+      <div id="sessionInfo" class="session-info hidden">
+        Session: <span id="sessionId">-</span>
+      </div>
+
+      <!-- Credentials Section -->
+      <div id="credentialsSection" class="section hidden">
+        <div class="section-header">
+          <label>Credentials</label>
+          <button id="addCredentialBtn" class="btn-small">+ Add</button>
+        </div>
+        <div id="credentialList" class="credential-list">
+          <div class="list-empty">No credentials configured</div>
+        </div>
+      </div>
+
+      <!-- Context Panel -->
+      <div id="contextPanel" class="context-panel hidden">
+        <div class="tabs">
+          <button class="tab active" data-tab="credentials">Creds</button>
+          <button class="tab" data-tab="roles">Roles</button>
+          <button class="tab" data-tab="objects">Objects</button>
+          <button class="tab" data-tab="functions">Funcs</button>
+        </div>
+
+        <div class="tab-content" id="tab-credentials">
+          <div class="list-empty">No credentials yet</div>
+          <ul class="item-list" id="list-credentials"></ul>
+        </div>
+
+        <div class="tab-content hidden" id="tab-roles">
+          <div class="list-empty">No roles yet</div>
+          <ul class="item-list" id="list-roles"></ul>
+        </div>
+
+        <div class="tab-content hidden" id="tab-objects">
+          <div class="list-empty">No objects yet</div>
+          <ul class="item-list" id="list-objects"></ul>
+        </div>
+
+        <div class="tab-content hidden" id="tab-functions">
+          <div class="list-empty">No functions yet</div>
+          <ul class="item-list" id="list-functions"></ul>
+        </div>
+
+        <div class="refresh-bar">
+          <button id="refreshBtn" class="btn-refresh">Refresh</button>
+          <span id="lastUpdate" class="last-update"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Credential Modal -->
+    <div id="credentialModal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h3>Add Credential</h3>
+
+        <div class="field">
+          <label for="credName">Name</label>
+          <input type="text" id="credName" placeholder="e.g. Admin User, Customer" />
+        </div>
+
+        <div class="field">
+          <label for="credContainer">Container</label>
+          <select id="credContainer">
+            <option value="firefox-default">Default (No Container)</option>
+          </select>
+          <small class="field-hint">
+            Requests from this container will use this credential.
+            Auth headers (Authorization, Cookie, etc.) will be captured automatically.
+          </small>
+        </div>
+
+        <div class="modal-actions">
+          <button id="cancelCred" class="btn btn-secondary">Cancel</button>
+          <button id="saveCred" class="btn btn-start">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
