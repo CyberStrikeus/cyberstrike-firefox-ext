@@ -40,6 +40,21 @@
         <input type="text" id="serverUrl" placeholder="http://127.0.0.1:4096" />
       </div>
 
+      <details id="serverAuthDetails" class="server-auth">
+        <summary class="server-auth-toggle">Server requires auth</summary>
+        <div class="server-auth-fields">
+          <div class="field">
+            <label for="serverUsername">Username</label>
+            <input type="text" id="serverUsername" placeholder="cyberstrike" autocomplete="off" />
+          </div>
+          <div class="field server-auth-password-field">
+            <label for="serverPassword">Password</label>
+            <input type="password" id="serverPassword" placeholder="••••••••" autocomplete="off" />
+            <button id="togglePassword" class="btn-eye" type="button" title="Show/hide password">&#128065;</button>
+          </div>
+        </div>
+      </details>
+
       <button id="toggleBtn" class="btn btn-start">Start Capture</button>
 
       <div class="status-bar">

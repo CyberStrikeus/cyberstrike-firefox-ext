@@ -27,6 +27,20 @@ const credContainer = document.getElementById("credContainer");
 const cancelCred = document.getElementById("cancelCred");
 const saveCred = document.getElementById("saveCred");
 
+// Server auth elements
+const serverUsernameInput = document.getElementById("serverUsername");
+const serverPasswordInput = document.getElementById("serverPassword");
+const togglePasswordBtn = document.getElementById("togglePassword");
+const serverAuthDetails = document.getElementById("serverAuthDetails");
+
+// Authorization headers — rebuilt from storage on init and on each Start
+let serverAuthHeaders = {};
+
+function buildAuthHeaders(username, password) {
+  if (!password) return {};
+  return { Authorization: "Basic " + btoa(`${username || "cyberstrike"}:${password}`) };
+}
+
 // --- State ---
 let capturing = false;
 let currentSessionID = null;
@@ -52,10 +66,17 @@ async function init() {
 }
 
 async function loadSavedSettings() {
-  const data = await browser.storage.local.get(["scope", "serverUrl"]);
+  const data = await browser.storage.local.get(["scope", "serverUrl", "serverUsername", "serverPassword"]);
   if (data.scope) scopeInput.value = data.scope;
   if (data.serverUrl) serverUrlInput.value = data.serverUrl;
   else serverUrlInput.value = "http://127.0.0.1:4096";
+
+  const username = data.serverUsername || "";
+  const password = data.serverPassword || "";
+  serverUsernameInput.value = username;
+  serverPasswordInput.value = password;
+  if (password) serverAuthDetails.open = true;
+  serverAuthHeaders = buildAuthHeaders(username, password);
 }
 
 // --- Session Management ---
@@ -64,7 +85,9 @@ async function loadSessions(activeSessionID = null) {
   const serverUrl = serverUrlInput.value.trim() || "http://127.0.0.1:4096";
 
   try {
-    const response = await fetch(`${serverUrl}/session?limit=20&roots=true`);
+    const response = await fetch(`${serverUrl}/session?limit=20&roots=true`, {
+      headers: serverAuthHeaders,
+    });
     if (!response.ok) throw new Error("Failed to fetch sessions");
 
     const sessions = await response.json();
@@ -132,6 +155,8 @@ function updateUI(state) {
     statusText.textContent = "Capturing...";
     scopeInput.disabled = true;
     serverUrlInput.disabled = true;
+    serverUsernameInput.disabled = true;
+    serverPasswordInput.disabled = true;
     sessionSelect.disabled = true;
   } else {
     toggleBtn.textContent = "Start Capture";
@@ -140,6 +165,8 @@ function updateUI(state) {
     statusText.textContent = "Stopped";
     scopeInput.disabled = false;
     serverUrlInput.disabled = false;
+    serverUsernameInput.disabled = false;
+    serverPasswordInput.disabled = false;
     sessionSelect.disabled = false;
   }
 
@@ -241,6 +268,7 @@ async function removeCredential(credentialID) {
       `${currentServerUrl}/session/${currentSessionID}/web/credentials/${credentialID}`,
       {
         method: "DELETE",
+        headers: serverAuthHeaders,
       },
     );
   } catch (err) {
@@ -342,15 +370,17 @@ async function fetchWebContext() {
     const [credentials, roles, objects, functions] = await Promise.all([
       fetch(
         `${currentServerUrl}/session/${currentSessionID}/web/credentials`,
+        { headers: serverAuthHeaders },
       ).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${currentServerUrl}/session/${currentSessionID}/web/roles`).then(
-        (r) => (r.ok ? r.json() : []),
-      ),
-      fetch(`${currentServerUrl}/session/${currentSessionID}/web/objects`).then(
-        (r) => (r.ok ? r.json() : []),
-      ),
+      fetch(`${currentServerUrl}/session/${currentSessionID}/web/roles`, {
+        headers: serverAuthHeaders,
+      }).then((r) => (r.ok ? r.json() : [])),
+      fetch(`${currentServerUrl}/session/${currentSessionID}/web/objects`, {
+        headers: serverAuthHeaders,
+      }).then((r) => (r.ok ? r.json() : [])),
       fetch(
         `${currentServerUrl}/session/${currentSessionID}/web/functions`,
+        { headers: serverAuthHeaders },
       ).then((r) => (r.ok ? r.json() : [])),
     ]);
 
@@ -439,16 +469,19 @@ toggleBtn.addEventListener("click", async () => {
     }
 
     const serverVal = serverUrlInput.value.trim() || "http://127.0.0.1:4096";
+    const usernameVal = serverUsernameInput.value.trim();
+    const passwordVal = serverPasswordInput.value;
     let selectedSessionID = sessionSelect.value || null;
 
-    await browser.storage.local.set({ scope: scopeVal, serverUrl: serverVal });
+    serverAuthHeaders = buildAuthHeaders(usernameVal, passwordVal);
+    await browser.storage.local.set({ scope: scopeVal, serverUrl: serverVal, serverUsername: usernameVal, serverPassword: passwordVal });
 
     // If no session selected, create one immediately so credentials can be added
     if (!selectedSessionID) {
       try {
         const createResp = await fetch(`${serverVal}/session`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...serverAuthHeaders, "Content-Type": "application/json" },
           body: JSON.stringify({}),
         });
         if (createResp.ok) {
@@ -467,6 +500,8 @@ toggleBtn.addEventListener("click", async () => {
       scope: scopeVal,
       serverUrl: serverVal,
       sessionID: selectedSessionID,
+      serverUsername: usernameVal,
+      serverPassword: passwordVal,
     });
 
     if (response.ok) {
@@ -536,6 +571,12 @@ refreshSessionsBtn.addEventListener("click", async () => {
 addCredentialBtn.addEventListener("click", openModal);
 cancelCred.addEventListener("click", closeModal);
 saveCred.addEventListener("click", saveCredential);
+
+togglePasswordBtn.addEventListener("click", () => {
+  const isPassword = serverPasswordInput.type === "password";
+  serverPasswordInput.type = isPassword ? "text" : "password";
+  togglePasswordBtn.style.opacity = isPassword ? "1" : "0.5";
+});
 
 credentialModal
   .querySelector(".modal-backdrop")

@@ -460,6 +460,69 @@ select {
   color: #4a4a6a;
 }
 
+/* Server Auth (collapsible) */
+.server-auth {
+  margin-bottom: 10px;
+}
+
+.server-auth-toggle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8892b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.server-auth-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.server-auth-toggle::before {
+  content: "▸";
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+
+details[open] .server-auth-toggle::before {
+  transform: rotate(90deg);
+}
+
+.server-auth-fields {
+  padding-top: 8px;
+}
+
+.server-auth-password-field {
+  position: relative;
+}
+
+.server-auth-password-field input {
+  padding-right: 36px;
+}
+
+.btn-eye {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #8892b0;
+  padding: 0;
+  line-height: 1;
+}
+
+.btn-eye:hover {
+  color: #00d4ff;
+}
+
 /* Modal */
 .modal {
   position: fixed;

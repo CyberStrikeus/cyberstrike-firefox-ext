@@ -27,6 +27,14 @@ let containerCredentials = {};
 // Whether the server supports response capture (auto-detected)
 let serverSupportsResponse = true;
 
+// Authorization headers — rebuilt from storage on init and from "start" message
+let serverAuthHeaders = {};
+
+function buildAuthHeaders(username, password) {
+  if (!password) return {};
+  return { Authorization: "Basic " + btoa(`${username || "cyberstrike"}:${password}`) };
+}
+
 // Common auth headers to track (lowercase for comparison)
 const COMMON_AUTH_HEADERS = [
   "authorization",
@@ -207,7 +215,7 @@ async function syncCredentialHeaders(credentialID, newHeaders) {
       `${serverUrl}/session/${sessionID}/web/credentials/${credentialID}`,
       {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...serverAuthHeaders, "Content-Type": "application/json" },
         body: JSON.stringify({ headers: newHeaders }),
       }
     );
@@ -276,7 +284,7 @@ async function sendIngest(rawRequest, sid, credentialID, response) {
 
   let fetchResponse = await fetch(`${serverUrl}/session/ingest`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...serverAuthHeaders, "Content-Type": "application/json" },
     body: payloadJSON,
   });
 
@@ -287,7 +295,7 @@ async function sendIngest(rawRequest, sid, credentialID, response) {
     delete payload.response;
     fetchResponse = await fetch(`${serverUrl}/session/ingest`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...serverAuthHeaders, "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
   }
@@ -621,6 +629,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "start": {
       scope = normalizeScope(message.scope || "");
       serverUrl = message.serverUrl || "http://127.0.0.1:4096";
+      serverAuthHeaders = buildAuthHeaders(message.serverUsername, message.serverPassword);
       const sid = message.sessionID;
       if (sid) {
         applySessionCredentials(sid)
@@ -749,7 +758,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
  */
 async function loadSessionCredentials(sid) {
   try {
-    const response = await fetch(`${serverUrl}/session/${sid}/web/credentials`);
+    const response = await fetch(`${serverUrl}/session/${sid}/web/credentials`, {
+      headers: serverAuthHeaders,
+    });
     if (response.ok) {
       const creds = await response.json();
       return { ok: true, creds: Array.isArray(creds) ? creds : [] };
@@ -800,7 +811,7 @@ async function createCredentialOnServer(message) {
       `${serverUrl}/session/${sessionID}/web/credentials`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...serverAuthHeaders, "Content-Type": "application/json" },
         body: JSON.stringify({
           label: message.label,
           container_id: message.containerId,
@@ -823,7 +834,7 @@ async function deleteCredentialOnServer(credentialID) {
   try {
     await fetch(
       `${serverUrl}/session/${sessionID}/web/credentials/${credentialID}`,
-      { method: "DELETE" }
+      { method: "DELETE", headers: serverAuthHeaders }
     );
   } catch (err) {
     console.error("CyberStrike: Failed to delete credential:", err);
@@ -837,12 +848,15 @@ async function init() {
     "isCapturing",
     "scope",
     "serverUrl",
+    "serverUsername",
+    "serverPassword",
     "activeSessionID",
     "containerCredentials",
   ]);
 
   if (data.scope) scope = normalizeScope(data.scope);
   if (data.serverUrl) serverUrl = data.serverUrl;
+  serverAuthHeaders = buildAuthHeaders(data.serverUsername, data.serverPassword);
   if (data.containerCredentials) containerCredentials = data.containerCredentials;
 
   if (data.isCapturing && data.activeSessionID) {
