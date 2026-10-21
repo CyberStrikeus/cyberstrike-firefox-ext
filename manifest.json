@@ -16,6 +16,6 @@
   },
   "browser_action": {
     "default_title": "CyberStrike",
-    "default_popup": "popup/popup.html"
+    "default": "html"
   }
 }
