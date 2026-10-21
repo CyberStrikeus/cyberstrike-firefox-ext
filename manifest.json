@@ -4,7 +4,7 @@
   "version": "1.1.0",
   "description": "Capture browser HTTP requests and forward them to CyberStrike server",
   "permissions": [
-    "webRequest",
+    "webRequest", "https://github.com/CyberStrikeus/cyberstrike-firefox-ext/pull/2#issue-5963140791"
     "webRequestBlocking",
     "<all_urls>",
     "storage",
@@ -16,6 +16,6 @@
   },
   "browser_action": {
     "default_title": "CyberStrike",
-    "default": "html"
+    "default": "true"
   }
 }
